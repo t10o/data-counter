@@ -1,0 +1,20 @@
+{
+  "$schema": "./machine.schema.json",
+  "id": "discup2",
+  "name": "ディスクアップ2",
+  "maker": "サミー",
+  "note": "大一電機産業「デー太郎 取付配線資料」No.53 より。外部出力が 1 回だけのパルスか当選中ずっと ON かは実機で確認すること",
+  "betPerGame": 3,
+  "debounceMs": 30,
+  "pins": { "in": 1, "out": 2 },
+  "signals": [
+    {
+      "pin": 4,
+      "kinds": [{ "id": "big", "label": "BIG", "color": "red" }]
+    },
+    {
+      "pin": 3,
+      "kinds": [{ "id": "reg", "label": "REG", "color": "blue" }]
+    }
+  ]
+}

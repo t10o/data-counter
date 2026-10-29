@@ -1,0 +1,25 @@
+{
+  "name": "@data-counter/server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Receives edge events from the Pico, stores them in SQLite and serves the API and the web UI",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch --env-file-if-exists=.env src/index.ts",
+    "build": "tsdown",
+    "start": "node --env-file-if-exists=.env dist/index.mjs",
+    "test": "vitest run",
+    "typecheck": "tsc",
+    "simulate": "node scripts/simulate.ts"
+  },
+  "dependencies": {
+    "@data-counter/core": "workspace:*",
+    "@hono/node-server": "^2.1.5",
+    "hono": "^4.13.14",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "tsdown": "^0.23.2",
+    "vitest": "^5.0.5"
+  }
+}

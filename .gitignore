@@ -1,0 +1,32 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+.output/
+.tanstack/
+*.tsbuildinfo
+
+# runtime data (SQLite database lives here)
+data/
+*.db
+*.db-shm
+*.db-wal
+
+# secrets: never commit these
+.env
+.env.*
+!.env.example
+firmware/config.py
+deploy/.env
+
+# python
+__pycache__/
+*.pyc
+.venv/
+
+# editors / OS
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json

@@ -1,0 +1,25 @@
+# deploy.sh が @USER@ / @DIR@ / @NODE@ を埋めてから /etc/systemd/system に置く
+[Unit]
+Description=Data Counter (pachislot external terminal logger)
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+User=@USER@
+WorkingDirectory=@DIR@
+EnvironmentFile=-@DIR@/.env
+Environment=NODE_ENV=production
+ExecStart=@NODE@ --enable-source-maps @DIR@/apps/server/dist/index.mjs
+Restart=always
+RestartSec=5
+
+# 書き込めるのはデータベースの置き場所だけにする
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=@DIR@/data
+
+[Install]
+WantedBy=multi-user.target

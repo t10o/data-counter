@@ -1,0 +1,12 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "printWidth": 120,
+  "sortImports": {
+    "newlinesBetween": false
+  },
+  "sortTailwindcss": {
+    "stylesheet": "./apps/web/src/styles.css",
+    "functions": ["cn", "clsx"]
+  },
+  "ignorePatterns": ["pnpm-lock.yaml", "**/routeTree.gen.ts", "machines/machine.schema.json"]
+}

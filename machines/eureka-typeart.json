@@ -1,0 +1,25 @@
+{
+  "$schema": "./machine.schema.json",
+  "id": "eureka-typeart",
+  "name": "パチスロ交響詩篇エウレカセブン HI-EVOLUTION ZERO TYPE-ART",
+  "maker": "サミー",
+  "note": "大一電機産業「デー太郎 取付配線資料」No.68 より。BIG と REG は同じピンから出るので、信号が ON の間の払い出し枚数で分ける。信号が 1 回だけのパルスだと枚数が数えられず、すべて REG になる",
+  "betPerGame": 3,
+  "debounceMs": 30,
+  "pins": { "in": 1, "out": 2 },
+  "signals": [
+    {
+      "pin": 4,
+      "label": "BONUS",
+      "kinds": [
+        { "id": "reg", "label": "REG", "color": "blue", "maxOut": 150 },
+        { "id": "big", "label": "BIG", "color": "red" }
+      ]
+    },
+    {
+      "pin": 3,
+      "resetsGames": false,
+      "kinds": [{ "id": "art", "label": "CM・HI-EVO", "color": "aqua" }]
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "name": "data-counter",
+  "version": "0.1.0",
+  "private": true,
+  "description": "家庭用パチスロ実機の外部集中端子板から信号を取り込むデータカウンター",
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --parallel --filter @data-counter/server --filter @data-counter/web dev",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test && pnpm test:firmware",
+    "test:firmware": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s firmware/tests -t firmware",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "oxlint --deny-warnings",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
+    "check": "pnpm fmt:check && pnpm lint && pnpm typecheck && pnpm test",
+    "simulate": "pnpm --filter @data-counter/server simulate",
+    "deploy:pi": "./deploy/deploy.sh"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "oxfmt": "^0.75.0",
+    "oxlint": "^1.90.0",
+    "typescript": "^7.0.2"
+  },
+  "engines": {
+    "node": ">=24.22.1"
+  },
+  "packageManager": "pnpm@11.8.0"
+}

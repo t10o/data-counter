@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .tool-versions
+          cache: pnpm
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version-file: .tool-versions
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm fmt:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+
+      - name: Compile the firmware with mpy-cross
+        run: |
+          pip install -r firmware/requirements-dev.txt
+          for file in firmware/main.py firmware/lib/*.py; do
+            mpy-cross -o /dev/null "$file"
+          done

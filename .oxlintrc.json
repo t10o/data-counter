@@ -1,0 +1,53 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["eslint", "typescript", "unicorn", "oxc", "import", "react", "jsx-a11y", "vitest"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn",
+    "perf": "warn"
+  },
+  "env": {
+    "builtin": true
+  },
+  "settings": {
+    "react": { "version": "19" }
+  },
+  "ignorePatterns": ["**/dist/**", "**/routeTree.gen.ts", "firmware/**"],
+  "rules": {
+    "eslint/no-unused-vars": [
+      "error",
+      { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_", "ignoreRestSiblings": true }
+    ],
+    "eslint/eqeqeq": "error",
+    "eslint/no-console": ["warn", { "allow": ["info", "warn", "error"] }],
+    "typescript/consistent-type-imports": "error",
+    "typescript/no-explicit-any": "error",
+    "typescript/no-non-null-assertion": "error",
+    "import/no-cycle": "error",
+    "react/rules-of-hooks": "error",
+    "react/exhaustive-deps": "warn",
+    "react/react-in-jsx-scope": "off",
+    "jsx-a11y/prefer-tag-over-role": "off",
+    "oxc/no-map-spread": "off",
+    "unicorn/prefer-node-protocol": "error"
+  },
+  "overrides": [
+    {
+      "files": ["apps/web/**"],
+      "env": { "browser": true },
+      "rules": { "eslint/no-console": "error" }
+    },
+    {
+      "files": ["apps/server/**", "packages/**", "**/*.config.ts"],
+      "env": { "node": true }
+    },
+    {
+      "files": ["**/*.test.ts", "**/test/**"],
+      "env": { "vitest": true }
+    },
+    {
+      "files": ["**/scripts/**"],
+      "rules": { "eslint/no-await-in-loop": "off" }
+    }
+  ]
+}

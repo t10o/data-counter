@@ -1,0 +1,29 @@
+@import "tailwindcss";
+@import "@fontsource-variable/inter";
+
+@theme {
+  --font-sans:
+    "Inter Variable", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic UI", system-ui,
+    sans-serif;
+
+  /* グラフの面と線。カードの背景（zinc-900）に合わせてある */
+  --color-chart-surface: #18181b;
+  --color-chart-grid: #27272a;
+  --color-chart-baseline: #52525b;
+  --color-chart-line: #e4e4e7;
+}
+
+@layer base {
+  :root {
+    color-scheme: dark;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-zinc-950 font-sans text-zinc-100 antialiased;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-zinc-300;
+  }
+}
