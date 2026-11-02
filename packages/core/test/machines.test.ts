@@ -41,6 +41,13 @@ describe("machineSchema", () => {
     expect(result.success).toBe(false);
   });
 
+  it("rejects a debounce long enough to swallow IN / OUT pulses", () => {
+    const base = { id: "slow", name: "長すぎるチャタリング除去", signals: [] };
+
+    expect(machineSchema.safeParse({ ...base, debounceMs: 49 }).success).toBe(true);
+    expect(machineSchema.safeParse({ ...base, debounceMs: 50 }).success).toBe(false);
+  });
+
   it("rejects the relay common pin and duplicated pins", () => {
     const base = { id: "broken", name: "壊れた設定" };
 

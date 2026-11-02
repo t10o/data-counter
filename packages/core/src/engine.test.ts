@@ -24,6 +24,30 @@ describe("CounterEngine", () => {
     expect(summary.payoutRate).toBeCloseTo(15 / 39);
   });
 
+  it("counts a burst of IN pulses as one game, whatever the bet", () => {
+    const timeline = new Timeline()
+      .pulses(IN, 3)
+      .wait(4000)
+      .pulses(IN, 2)
+      .wait(4000)
+      .pulses(IN, 1)
+      .wait(4000)
+      .pulses(IN, 3);
+    const summary = new CounterEngine(testMachine()).pushAll(timeline.events).finish().summary();
+
+    expect(summary).toMatchObject({ in: 9, totalGames: 4 });
+  });
+
+  it("starts a new game only after gameGapMs without IN pulses", () => {
+    // 塊の最後のパルスから次の塊の最初のパルスまで 600 ms
+    const timeline = new Timeline().pulses(IN, 3).wait(500).pulses(IN, 3);
+    const count = (gameGapMs: number) =>
+      new CounterEngine(testMachine({ gameGapMs })).pushAll(timeline.events).finish().summary().totalGames;
+
+    expect(count(1000)).toBe(1);
+    expect(count(600)).toBe(2);
+  });
+
   it("ignores chattering shorter than debounceMs", () => {
     const timeline = new Timeline()
       .fall(IN)
@@ -138,7 +162,7 @@ describe("CounterEngine", () => {
     expect(engine.summary().out).toBe(1);
   });
 
-  it("builds a slump graph that ends at the current difference", () => {
+  it("plots the difference at the end of each game, ending at the current one", () => {
     const timeline = new Timeline().games(2).game(10).pulses(IN, 3);
     const snapshot = new CounterEngine(testMachine()).pushAll(timeline.events).finish().snapshot();
 
@@ -146,7 +170,7 @@ describe("CounterEngine", () => {
       [0, 0],
       [1, -3],
       [2, -6],
-      [3, -9],
+      [3, 1],
       [4, -2],
     ]);
   });

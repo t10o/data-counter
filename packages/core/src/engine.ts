@@ -12,7 +12,7 @@ import type {
 } from "./types.ts";
 
 /** 集計の仕方を変えたら上げる。保存してある集計結果のキャッシュを捨てるのに使う */
-export const ENGINE_VERSION = 1;
+export const ENGINE_VERSION = 2;
 
 const DEFAULT_MAX_SLUMP_POINTS = 1200;
 
@@ -25,6 +25,8 @@ export interface SnapshotOptions {
  * 生イベントからデータカウンターの数字を組み立てる。
  *
  * - イベントは時刻順に {@link push} する
+ * - ゲーム数は、レバーオンで出る IN のパルスの塊を 1 ゲームとして数える（IN 枚数を割り算しない）。
+ *   ボーナス中などでベット枚数が変わっても数えられる
  * - チャタリングを除くため、変化は machine.debounceMs だけ続いてから確定する。
  *   ライブで使うときは {@link advanceTo} で時間が進んだことを知らせると、次のイベントを待たずに確定する
  * - 過去のデータをまとめて集計するときは、最後に {@link finish} を呼ぶ
@@ -43,8 +45,10 @@ export class CounterEngine {
   #maxDiff = 0;
   #minDiff = 0;
   #maxGames = 0;
-  /** 添字のゲーム数を消化し始めた時点の差枚 */
+  /** 添字のゲーム数を消化し終えた時点の差枚。消化中のゲームの分は snapshot で今の差枚を入れる */
   readonly #diffByGame: number[] = [0];
+  /** 直前の IN パルスの時刻。これだけあいたら次のゲームの始まり */
+  #lastInAtUs: number | null = null;
   readonly #hits: Hit[] = [];
   /** 信号が ON になっている当たり（キーはピン番号） */
   readonly #activeHits = new Map<number, Hit>();
@@ -131,7 +135,7 @@ export class CounterEngine {
   snapshot({ maxSlumpPoints = DEFAULT_MAX_SLUMP_POINTS }: SnapshotOptions = {}): CounterSnapshot {
     // 最後の点は、消化中のゲームの払い出しも含めた今の差枚にする
     const diffByGame = [...this.#diffByGame];
-    diffByGame[diffByGame.length - 1] = this.#diff;
+    diffByGame[this.#totalGames] = this.#diff;
 
     return {
       ...this.summary(),
@@ -167,7 +171,7 @@ export class CounterEngine {
     const on = level === 0;
 
     if (pin === this.machine.pins.in) {
-      if (on) this.#countIn();
+      if (on) this.#countIn(atUs);
       return;
     }
     if (pin === this.machine.pins.out) {
@@ -184,13 +188,20 @@ export class CounterEngine {
     }
   }
 
-  #countIn(): void {
+  #countIn(atUs: number): void {
+    // ベット枚数分のパルスがレバーオンでまとめて出るので、前のパルスから間があいていたら新しいゲーム
+    const startsGame = this.#lastInAtUs === null || atUs - this.#lastInAtUs >= this.machine.gameGapMs * 1000;
+    this.#lastInAtUs = atUs;
+    if (startsGame) this.#startGame();
+
     this.#in++;
     this.#trackDiff();
-    if (this.#in % this.machine.betPerGame !== 0) return;
+  }
 
+  #startGame(): void {
+    // 前のゲームの払い出しまで含めた差枚を、そのゲームの点にする
+    this.#diffByGame[this.#totalGames] = this.#diff;
     this.#totalGames++;
-    this.#diffByGame.push(this.#diff);
     for (const hit of this.#activeHits.values()) hit.gamesDuring++;
     if (!this.#inBonus) {
       this.#currentGames++;

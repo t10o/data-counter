@@ -4,8 +4,8 @@
   "name": "ディスクアップ2",
   "maker": "サミー",
   "note": "大一電機産業「デー太郎 取付配線資料」No.53 より。外部出力が 1 回だけのパルスか当選中ずっと ON かは実機で確認すること",
-  "betPerGame": 3,
-  "debounceMs": 30,
+  "debounceMs": 10,
+  "gameGapMs": 1000,
   "pins": { "in": 1, "out": 2 },
   "signals": [
     {

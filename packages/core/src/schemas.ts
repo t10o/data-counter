@@ -46,16 +46,21 @@ export const machineSchema = z
     name: z.string().min(1),
     maker: z.string().optional(),
     note: z.string().optional(),
-    betPerGame: z
-      .int()
-      .positive()
-      .default(3)
-      .describe("1 ゲームあたりの投入枚数。総回転数は IN 枚数をこれで割って求める"),
     debounceMs: z
       .number()
       .nonnegative()
-      .default(30)
-      .describe("チャタリングとみなして無視する時間（ミリ秒）。これより短いパルスは捨てる"),
+      .lt(50, "50 ms 以上にすると、IN や OUT のパルスまで捨ててしまいます")
+      .default(10)
+      .describe(
+        "チャタリングとみなして無視する時間（ミリ秒）。これより短いパルスは捨てる。IN / OUT のパルスを消さないよう 50 未満にする（目安は 10）",
+      ),
+    gameGapMs: z
+      .number()
+      .positive()
+      .default(1000)
+      .describe(
+        "IN のパルスがこれだけあいたら次のゲームとみなす（ミリ秒）。レバーオンで出るパルスの塊を 1 ゲームと数えるので、ベット枚数が変わっても数えられる",
+      ),
     pins: z
       .object({
         in: pinSchema.default(1),

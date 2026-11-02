@@ -16,18 +16,18 @@
     "note": {
       "type": "string"
     },
-    "betPerGame": {
-      "default": 3,
-      "description": "1 ゲームあたりの投入枚数。総回転数は IN 枚数をこれで割って求める",
-      "type": "integer",
-      "exclusiveMinimum": 0,
-      "maximum": 9007199254740991
-    },
     "debounceMs": {
-      "default": 30,
-      "description": "チャタリングとみなして無視する時間（ミリ秒）。これより短いパルスは捨てる",
+      "default": 10,
+      "description": "チャタリングとみなして無視する時間（ミリ秒）。これより短いパルスは捨てる。IN / OUT のパルスを消さないよう 50 未満にする（目安は 10）",
       "type": "number",
-      "minimum": 0
+      "minimum": 0,
+      "exclusiveMaximum": 50
+    },
+    "gameGapMs": {
+      "default": 1000,
+      "description": "IN のパルスがこれだけあいたら次のゲームとみなす（ミリ秒）。レバーオンで出るパルスの塊を 1 ゲームと数えるので、ベット枚数が変わっても数えられる",
+      "type": "number",
+      "exclusiveMinimum": 0
     },
     "pins": {
       "default": {},

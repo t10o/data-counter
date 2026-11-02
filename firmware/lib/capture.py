@@ -29,8 +29,8 @@ class EdgeCapture:
 
         self._inputs = {}
         for cn2, gpio in pins.items():
-            # プルアップは基板の 10kΩ（3.3V）でかけている
-            pin = Pin(gpio, Pin.IN)
+            # 外付けの抵抗なしで読めるよう、内蔵プルアップを使う（外付けがあっても害はない）
+            pin = Pin(gpio, Pin.IN, Pin.PULL_UP)
             pin.irq(self._handler(cn2), _BOTH_EDGES, hard=True)
             self._inputs[cn2] = pin
 

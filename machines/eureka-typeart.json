@@ -4,8 +4,8 @@
   "name": "パチスロ交響詩篇エウレカセブン HI-EVOLUTION ZERO TYPE-ART",
   "maker": "サミー",
   "note": "大一電機産業「デー太郎 取付配線資料」No.68 より。BIG と REG は同じピンから出るので、信号が ON の間の払い出し枚数で分ける。信号が 1 回だけのパルスだと枚数が数えられず、すべて REG になる",
-  "betPerGame": 3,
-  "debounceMs": 30,
+  "debounceMs": 10,
+  "gameGapMs": 1000,
   "pins": { "in": 1, "out": 2 },
   "signals": [
     {

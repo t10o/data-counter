@@ -139,8 +139,8 @@ sudo systemctl restart data-counter  # 再起動
   "$schema": "./machine.schema.json",
   "id": "discup2", // ファイル名と同じにする
   "name": "ディスクアップ2",
-  "betPerGame": 3, // 総回転数 = IN 枚数 ÷ betPerGame
-  "debounceMs": 30, // これより短い変化はチャタリングとして捨てる
+  "debounceMs": 10, // これより短い変化はチャタリングとして捨てる（50 未満にする）
+  "gameGapMs": 1000, // IN のパルスがこれだけあいたら次のゲーム
   "pins": { "in": 1, "out": 2 },
   "signals": [
     { "pin": 4, "kinds": [{ "id": "big", "label": "BIG", "color": "red" }] },
@@ -149,6 +149,8 @@ sudo systemctl restart data-counter  # 再起動
 }
 ```
 
+- ゲーム数は、レバーオンで出る IN のパルスの塊を 1 ゲームとして数えます。IN 枚数の割り算ではないので、ボーナス中などでベット枚数が変わっても数えられます
+- `debounceMs` を 50 以上にすると IN / OUT のパルスまで捨ててしまうので、設定の読み込みで止めます（目安は 10）
 - 信号が ON になった瞬間を当たりとして数えます。ON の間の払い出し枚数とゲーム数も記録します
 - 1 つのピンから複数の種別が出る機種（エウレカの BIG と REG など）は、`kinds` を並べて `maxOut` を書くと、ON の間の払い出し枚数で種別を分けます
 - `resetsGames: false` にすると、その信号では現在のゲーム数（ハマり）を 0 に戻しません
@@ -209,5 +211,5 @@ sudo systemctl restart data-counter  # 再起動
 - 外部出力（BIG / REG）が、当選時に 1 回だけパルスを出すのか、ボーナス中ずっと ON なのか
   - どちらでも回数は数えられます。ずっと ON なら、ボーナス中の払い出し枚数とゲーム数も出せます
   - エウレカの BIG / REG の判別は、ずっと ON のときだけ働きます
-- IN / OUT のパルス幅と間隔（`debounceMs` の決め方）。端子のページの「パルス幅」で測れます
+- IN / OUT のパルス幅と、1 ゲームのパルスの塊の間隔（`debounceMs` と `gameGapMs` が合っているか）。端子のページの「パルス幅」と「届いたイベント」で測れます
 - リプレイのときに IN の信号が出るか（出ないと総回転が少なく数えられます）
