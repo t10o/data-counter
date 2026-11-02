@@ -213,3 +213,7 @@ sudo systemctl restart data-counter  # 再起動
   - エウレカの BIG / REG の判別は、ずっと ON のときだけ働きます
 - IN / OUT のパルス幅と、1 ゲームのパルスの塊の間隔（`debounceMs` と `gameGapMs` が合っているか）。端子のページの「パルス幅」と「届いたイベント」で測れます
 - リプレイのときに IN の信号が出るか（出ないと総回転が少なく数えられます）
+
+## ライセンス
+
+[MIT](LICENSE)
