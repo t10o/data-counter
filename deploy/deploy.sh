@@ -20,7 +20,7 @@ echo "==> build"
 pnpm build
 
 echo "==> upload to $DEPLOY_HOST:$DEPLOY_DIR"
-ssh "$DEPLOY_HOST" "mkdir -p '$DEPLOY_DIR/data'"
+ssh "$DEPLOY_HOST" "mkdir -p '$DEPLOY_DIR'"
 # data/（データベース）と .env はラズパイにしかないので、--delete の対象に含めない
 rsync -az --delete --relative \
   apps/server/dist/ \
@@ -48,7 +48,21 @@ if [[ ! -f "$dir/.env" ]]; then
   echo "注意: $dir/.env がありません。INGEST_TOKEN なしで動きます（apps/server/.env.example を参照）" >&2
 fi
 
-sed -e "s|@USER@|$USER|g" -e "s|@DIR@|$dir|g" -e "s|@NODE@|$node_bin|g" \
+# データベースの置き場所。サーバーと同じく .env の DATA_DIR を見て、相対パスは作業ディレクトリ（$dir）から数える
+data_dir="$dir/data"
+configured="$(sed -n -E "s/^DATA_DIR=[\"']?([^\"']*)[\"']?[[:space:]]*$/\1/p" "$dir/.env" 2>/dev/null | tail -n 1)"
+if [[ -n "$configured" ]]; then
+  if [[ "$configured" == /* ]]; then
+    data_dir="$configured"
+  else
+    data_dir="$dir/$configured"
+  fi
+fi
+mkdir -p "$data_dir"
+data_dir="$(cd "$data_dir" && pwd)"
+echo "database: $data_dir"
+
+sed -e "s|@USER@|$USER|g" -e "s|@DIR@|$dir|g" -e "s|@NODE@|$node_bin|g" -e "s|@DATA_DIR@|$data_dir|g" \
   "$dir/deploy/data-counter.service" | sudo tee /etc/systemd/system/data-counter.service >/dev/null
 sudo systemctl daemon-reload
 sudo systemctl enable --quiet data-counter.service

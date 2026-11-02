@@ -116,6 +116,17 @@ journalctl -u data-counter -f        # ログ
 sudo systemctl restart data-counter  # 再起動
 ```
 
+### データベースを SSD に置く
+
+ラズパイの `~/data-counter/.env` に `DATA_DIR` を書いてから `pnpm deploy:pi` します。サービスはそのフォルダにだけ書き込めるようになり、ディスクがマウントされるまで起動を待ちます。
+
+```sh
+# ラズパイで（/mnt/ssd は SSD のマウント先）
+echo 'DATA_DIR=/mnt/ssd/data-counter' >> ~/data-counter/.env
+```
+
+使い始めたあとで移すときは、先にサービスを止めて（`sudo systemctl stop data-counter`）、`data-counter.db` をそのフォルダにコピーしてからデプロイします。
+
 ## 設定
 
 ### サーバー（`apps/server/.env`、ラズパイでは `~/data-counter/.env`）
