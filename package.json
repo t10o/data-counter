@@ -2,8 +2,8 @@
   "name": "data-counter",
   "version": "0.1.0",
   "private": true,
-  "license": "MIT",
   "description": "家庭用パチスロ実機の外部集中端子板から信号を取り込むデータカウンター",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "pnpm --parallel --filter @data-counter/server --filter @data-counter/web dev",
