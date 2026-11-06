@@ -26,7 +26,12 @@ const signalSchema = z
     pin: pinSchema,
     label: z.string().min(1).optional().describe("種別が決まるまでの表示名。省略時は種別名を / でつなぐ"),
     kinds: z.array(kindSchema).min(1),
-    resetsGames: z.boolean().default(true).describe("当たったら現在のゲーム数（ハマり）を 0 に戻すか"),
+    resetsGames: z
+      .boolean()
+      .default(true)
+      .describe(
+        "当たったらボナ間のゲーム数（ハマり）を 0 に戻し、合成確率に数えるか。ART のセットなどは false にする（ボナ・ART 間のゲーム数はどちらでも 0 に戻す）",
+      ),
   })
   .superRefine((signal, ctx) => {
     signal.kinds.slice(0, -1).forEach((kind, index) => {

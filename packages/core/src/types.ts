@@ -44,8 +44,10 @@ export interface Hit {
   color: KindColor;
   startedAtUs: number;
   endedAtUs: number | null;
-  /** 前の当たりからのゲーム数（ハマり） */
+  /** ゲーム数を戻す信号（resetsGames。ボーナスなど）の前の当たりからのゲーム数（ボナ間ハマり） */
   games: number;
+  /** resetsGames: false の信号（ART など）も含めた、前の当たりからのゲーム数（ボナ・ART 間ハマり） */
+  gamesAny: number;
   /** 当たった時点の総ゲーム数 */
   totalGames: number;
   /** 当たった時点の差枚 */
@@ -71,8 +73,13 @@ export type SlumpPoint = readonly [games: number, diff: number];
 export interface CounterSummary {
   machineId: string;
   totalGames: number;
-  /** 最後の当たりからのゲーム数 */
+  /** ゲーム数を戻す信号（resetsGames。ボーナスなど）の最後の当たりからのゲーム数（ボナ間ハマり） */
   currentGames: number;
+  /**
+   * resetsGames: false の信号（ART など）も含めた、最後の当たりからのゲーム数（ボナ・ART 間ハマり）。
+   * すべての信号がゲーム数を戻す機種では currentGames と同じになる
+   */
+  currentGamesAny: number;
   in: number;
   out: number;
   /** 差枚（OUT − IN） */
@@ -81,8 +88,10 @@ export interface CounterSummary {
   payoutRate: number | null;
   maxDiff: number;
   minDiff: number;
-  /** 最大ハマり */
+  /** currentGames の最大（ボナ間の最大ハマり） */
   maxGames: number;
+  /** currentGamesAny の最大（ボナ・ART 間の最大ハマり） */
+  maxGamesAny: number;
   kinds: KindStat[];
   /** ゲーム数を戻す信号の当たり回数の合計 */
   hitCount: number;

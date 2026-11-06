@@ -23,6 +23,13 @@ export function pinLabel(pin: number, machine: MachineConfig | undefined): strin
 }
 
 /**
+ * ボナ間とは別に、ボナ・ART 間のハマりも出す機種か。
+ * ゲーム数を戻さない信号（ART のセットなど）がなければ、2 つは同じ数になるので 1 つだけ出す
+ */
+export const hasArtGames = (machine: MachineConfig | undefined): boolean =>
+  machine?.signals.some((signal) => !signal.resetsGames) ?? false;
+
+/**
  * 種別の色。暗い背景の上で区別できるか検証した 8 色（BIG 赤・REG 青の組み合わせは色覚特性があっても見分けられる）。
  * 3 色以上を並べるときは、色だけに頼らず形やラベルでも区別すること。
  */

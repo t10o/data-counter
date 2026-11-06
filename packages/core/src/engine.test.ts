@@ -143,6 +143,50 @@ describe("CounterEngine", () => {
     expect(summary.kinds[0]?.count).toBe(1);
   });
 
+  it("counts games since any hit (bonus or ART) apart from games since a bonus", () => {
+    const machine = testMachine({
+      signals: [
+        { pin: BIG, kinds: [{ id: "big", label: "BIG" }] },
+        { pin: REG, resetsGames: false, kinds: [{ id: "art", label: "ART" }] },
+      ],
+    });
+    const timeline = new Timeline()
+      .games(30)
+      .pulses(REG, 1)
+      .games(20)
+      .fall(BIG)
+      .games(25, 8)
+      .rise(BIG)
+      .games(12)
+      .pulses(REG, 1)
+      .games(7);
+    const snapshot = new CounterEngine(machine).pushAll(timeline.events).finish().snapshot();
+
+    expect(snapshot.hits.map((hit) => [hit.kindId, hit.games, hit.gamesAny])).toEqual([
+      ["art", 30, 30],
+      ["big", 50, 20],
+      ["art", 12, 12],
+    ]);
+    expect(snapshot).toMatchObject({ currentGames: 19, maxGames: 50, currentGamesAny: 7, maxGamesAny: 30 });
+  });
+
+  it("keeps games since a bonus running while a non-resetting signal stays on", () => {
+    const machine = testMachine({
+      signals: [{ pin: REG, resetsGames: false, kinds: [{ id: "art", label: "ART" }] }],
+    });
+    const timeline = new Timeline().games(10).fall(REG).games(40).rise(REG).games(5);
+    const summary = new CounterEngine(machine).pushAll(timeline.events).finish().summary();
+
+    expect(summary).toMatchObject({ currentGames: 55, currentGamesAny: 5, maxGamesAny: 10 });
+  });
+
+  it("gives the same games since any hit when every signal resets the games", () => {
+    const timeline = new Timeline().games(40).fall(BIG).games(20, 8).rise(BIG).games(15);
+    const summary = new CounterEngine(testMachine()).pushAll(timeline.events).finish().summary();
+
+    expect(summary).toMatchObject({ currentGames: 15, currentGamesAny: 15, maxGames: 40, maxGamesAny: 40 });
+  });
+
   it("ignores a signal that was already on before counting started", () => {
     const timeline = new Timeline().games(5).rise(BIG).games(5);
     const summary = new CounterEngine(testMachine()).pushAll(timeline.events).finish().summary();

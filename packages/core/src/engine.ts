@@ -12,7 +12,7 @@ import type {
 } from "./types.ts";
 
 /** 集計の仕方を変えたら上げる。保存してある集計結果のキャッシュを捨てるのに使う */
-export const ENGINE_VERSION = 2;
+export const ENGINE_VERSION = 3;
 
 const DEFAULT_MAX_SLUMP_POINTS = 1200;
 
@@ -27,6 +27,8 @@ export interface SnapshotOptions {
  * - イベントは時刻順に {@link push} する
  * - ゲーム数は、レバーオンで出る IN のパルスの塊を 1 ゲームとして数える（IN 枚数を割り算しない）。
  *   ボーナス中などでベット枚数が変わっても数えられる
+ * - ハマりは 2 通り数える。currentGames はゲーム数を戻す信号（resetsGames。ボーナスなど）の当たりから（ボナ間）、
+ *   currentGamesAny はどの信号の当たりからでも（ボナ・ART 間）。どちらも当たりの信号が ON の間は進めない
  * - チャタリングを除くため、変化は machine.debounceMs だけ続いてから確定する。
  *   ライブで使うときは {@link advanceTo} で時間が進んだことを知らせると、次のイベントを待たずに確定する
  * - 過去のデータをまとめて集計するときは、最後に {@link finish} を呼ぶ
@@ -42,9 +44,11 @@ export class CounterEngine {
   #out = 0;
   #totalGames = 0;
   #currentGames = 0;
+  #currentGamesAny = 0;
   #maxDiff = 0;
   #minDiff = 0;
   #maxGames = 0;
+  #maxGamesAny = 0;
   /** 添字のゲーム数を消化し終えた時点の差枚。消化中のゲームの分は snapshot で今の差枚を入れる */
   readonly #diffByGame: number[] = [0];
   /** 直前の IN パルスの時刻。これだけあいたら次のゲームの始まり */
@@ -116,6 +120,7 @@ export class CounterEngine {
       machineId: this.machine.id,
       totalGames: this.#totalGames,
       currentGames: this.#currentGames,
+      currentGamesAny: this.#currentGamesAny,
       in: this.#in,
       out: this.#out,
       diff: this.#diff,
@@ -123,6 +128,7 @@ export class CounterEngine {
       maxDiff: this.#maxDiff,
       minDiff: this.#minDiff,
       maxGames: this.#maxGames,
+      maxGamesAny: this.#maxGamesAny,
       kinds,
       hitCount,
       hitProbability: ratio(this.#totalGames, hitCount),
@@ -207,6 +213,10 @@ export class CounterEngine {
       this.#currentGames++;
       this.#maxGames = Math.max(this.#maxGames, this.#currentGames);
     }
+    if (this.#activeHits.size === 0) {
+      this.#currentGamesAny++;
+      this.#maxGamesAny = Math.max(this.#maxGamesAny, this.#currentGamesAny);
+    }
   }
 
   #countOut(): void {
@@ -232,6 +242,7 @@ export class CounterEngine {
       startedAtUs: atUs,
       endedAtUs: null,
       games: this.#currentGames,
+      gamesAny: this.#currentGamesAny,
       totalGames: this.#totalGames,
       diff: this.#diff,
       out: 0,
@@ -239,6 +250,7 @@ export class CounterEngine {
     };
     this.#hits.push(hit);
     this.#activeHits.set(signal.pin, hit);
+    this.#currentGamesAny = 0;
     if (signal.resetsGames) this.#currentGames = 0;
   }
 

@@ -2,7 +2,7 @@ import type { CounterSummary, Hit, MachineConfig } from "@data-counter/core";
 import type { ReactNode } from "react";
 import { cn } from "../../lib/cn";
 import { formatInteger, formatPercent, formatProbability, formatSigned } from "../../lib/format";
-import { kindShape } from "../../lib/machine";
+import { hasArtGames, kindShape } from "../../lib/machine";
 import { KindMark } from "../ui/kind-mark";
 
 interface CounterBoardProps {
@@ -15,6 +15,12 @@ interface CounterBoardProps {
 /** ホールのデータカウンターの正面にあたる部分 */
 export function CounterBoard({ summary, machine, activeHits }: CounterBoardProps) {
   const active = activeHits.at(-1);
+  const hamari = hasArtGames(machine)
+    ? [
+        { label: "ボナ・ART間", current: summary.currentGamesAny, max: summary.maxGamesAny },
+        { label: "ボナ間", current: summary.currentGames, max: summary.maxGames },
+      ]
+    : [{ label: "現在", current: summary.currentGames, max: summary.maxGames }];
 
   return (
     <div className="flex flex-col gap-3">
@@ -37,13 +43,16 @@ export function CounterBoard({ summary, machine, activeHits }: CounterBoardProps
           value={formatInteger(summary.totalGames)}
           detail={`合成 ${formatProbability(summary.hitProbability)}`}
         />
-        <Tile
-          label="現在"
-          value={formatInteger(summary.currentGames)}
-          detail={`最大 ${formatInteger(summary.maxGames)}`}
-          badge={active && `${active.label} 中`}
-          highlight={active !== undefined}
-        />
+        {hamari.map(({ label, current, max }, index) => (
+          <Tile
+            key={label}
+            label={label}
+            value={formatInteger(current)}
+            detail={`最大 ${formatInteger(max)}`}
+            badge={index === 0 && active ? `${active.label} 中` : undefined}
+            highlight={index === 0 && active !== undefined}
+          />
+        ))}
       </div>
 
       <dl className="grid grid-cols-2 gap-x-6 gap-y-3 rounded-2xl bg-zinc-900 px-5 py-4 ring-1 ring-white/10 sm:grid-cols-3 lg:grid-cols-6">

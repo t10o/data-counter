@@ -15,7 +15,7 @@ import {
   formatSigned,
   formatTime,
 } from "../../../../lib/format";
-import { KIND_COLORS, kindShape, pinLabel } from "../../../../lib/machine";
+import { hasArtGames, KIND_COLORS, kindShape, pinLabel } from "../../../../lib/machine";
 import { withIntervals } from "../../../../lib/pulses";
 import { eventsQuery, machinesQuery, sessionQuery } from "../../../../lib/queries";
 
@@ -74,15 +74,20 @@ function HitPage() {
 }
 
 function HitHeader({ hit, machine }: { hit: Hit; machine: MachineConfig | undefined }) {
+  const artGames = hasArtGames(machine);
+
   return (
     <header className="flex flex-col gap-3">
       <h1 className="flex items-center gap-2.5 text-xl font-semibold text-zinc-50 sm:text-2xl">
         <KindMark color={hit.color} shape={kindShape(machine, hit.kindId)} size={14} />
         {hit.index} 回目 {hit.label}
-        <span className="text-base font-normal text-zinc-400">{formatInteger(hit.games)} G で当選</span>
+        <span className="text-base font-normal text-zinc-400">
+          {formatInteger(artGames ? hit.gamesAny : hit.games)} G で当選
+        </span>
       </h1>
       <dl className="flex flex-wrap gap-x-8 gap-y-2 text-sm">
         <Fact label="当選時刻" value={formatTime(hit.startedAtUs)} />
+        {artGames && <Fact label="ボナ間" value={`${formatInteger(hit.games)} G`} />}
         <Fact label="総回転" value={`${formatInteger(hit.totalGames)} G`} />
         <Fact label="当選時の差枚" value={formatSigned(hit.diff)} />
         <Fact
