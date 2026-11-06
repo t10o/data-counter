@@ -2,6 +2,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import { createRootRouteWithContext, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { AppHeader } from "../components/app-header";
+import { CelebrationLayer } from "../components/celebration/celebration-layer";
 import { useLiveStream } from "../lib/live-stream";
 import appCss from "../styles.css?url";
 
@@ -60,6 +61,7 @@ function RootLayout() {
           <Outlet />
         </div>
       </main>
+      <CelebrationLayer />
     </div>
   );
 }

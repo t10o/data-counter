@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Activity, Cable, History } from "lucide-react";
 import { cn } from "../lib/cn";
 import { type LiveStatus, useLiveStatus } from "../lib/live-stream";
+import { CelebrationMenu } from "./celebration/celebration-menu";
 
 const NAV = [
   { to: "/", label: "データ", icon: Activity, exact: true },
@@ -33,7 +34,10 @@ export function AppHeader() {
           ))}
         </nav>
 
-        <LiveIndicator />
+        <div className="ml-auto flex items-center gap-2">
+          <LiveIndicator />
+          <CelebrationMenu />
+        </div>
       </div>
     </header>
   );
@@ -48,12 +52,13 @@ const LIVE_LABELS: Record<LiveStatus, string> = {
 function LiveIndicator() {
   const status = useLiveStatus();
   return (
-    <p className="ml-auto flex items-center gap-2 text-xs text-zinc-400" role="status">
+    <p className="flex items-center gap-2 text-xs text-zinc-400" role="status">
       <span
         className={cn("size-2 rounded-full", status === "open" ? "bg-emerald-400" : "animate-pulse bg-amber-400")}
         aria-hidden="true"
       />
-      {LIVE_LABELS[status]}
+      {/* スマホの幅では演出のボタンと並ぶと収まらないので、点だけにする（読み上げはする） */}
+      <span className="sr-only sm:not-sr-only">{LIVE_LABELS[status]}</span>
     </p>
   );
 }
