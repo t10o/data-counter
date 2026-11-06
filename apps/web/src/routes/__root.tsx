@@ -45,10 +45,13 @@ function RootLayout() {
   useLiveStream(queryClient);
 
   return (
-    <div className="min-h-dvh">
+    // 画面の高さに固定して、スクロールは本体（main）の中でする。実戦の画面はこの高さいっぱいに広げて 1 画面に収める
+    <div className="flex h-dvh flex-col">
       <AppHeader />
-      <main className="mx-auto max-w-7xl px-4 pt-6 pb-16 sm:px-6">
-        <Outlet />
+      <main id="main" data-scroll-restoration-id="main" className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+        <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 py-4 sm:px-6 sm:py-6">
+          <Outlet />
+        </div>
       </main>
     </div>
   );

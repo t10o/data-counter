@@ -56,6 +56,7 @@ function HitPage() {
         <Link
           to="/sessions/$sessionId"
           params={{ sessionId }}
+          search={{ view: "hits" }}
           className="inline-flex items-center gap-1 text-zinc-400 hover:text-zinc-100"
         >
           <ChevronLeft className="size-4" aria-hidden="true" />

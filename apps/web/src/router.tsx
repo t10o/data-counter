@@ -12,6 +12,8 @@ export function getRouter() {
     routeTree,
     context: { queryClient },
     scrollRestoration: true,
+    // スクロールするのは window ではなく本体（__root.tsx の main）なので、ページを移ったらそこを先頭に戻す
+    scrollToTopSelectors: ["#main"],
     defaultPreload: "intent",
     // キャッシュは TanStack Query に任せる
     defaultPreloadStaleTime: 0,

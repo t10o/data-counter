@@ -4,9 +4,12 @@ import { Cable } from "lucide-react";
 import { SessionDashboard } from "../components/session/session-dashboard";
 import { StartSessionButton } from "../components/session/start-session-button";
 import { Card } from "../components/ui/card";
+import { dashboardSearchMiddlewares, dashboardSearchSchema } from "../lib/dashboard-view";
 import { currentSessionQuery, machinesQuery } from "../lib/queries";
 
 export const Route = createFileRoute("/")({
+  validateSearch: dashboardSearchSchema,
+  search: { middlewares: dashboardSearchMiddlewares },
   loader: ({ context: { queryClient } }) =>
     Promise.all([queryClient.ensureQueryData(currentSessionQuery()), queryClient.ensureQueryData(machinesQuery())]),
   component: LivePage,
@@ -15,6 +18,7 @@ export const Route = createFileRoute("/")({
 function LivePage() {
   const { data: session } = useSuspenseQuery(currentSessionQuery());
   const { data: machines } = useSuspenseQuery(machinesQuery());
+  const { view } = Route.useSearch();
 
   if (session === null) {
     return (
@@ -41,6 +45,7 @@ function LivePage() {
     <SessionDashboard
       session={session}
       machine={machines.find((machine) => machine.id === session.machineId)}
+      view={view}
       actions={<StartSessionButton machines={machines} defaultMachineId={session.machineId} />}
     />
   );

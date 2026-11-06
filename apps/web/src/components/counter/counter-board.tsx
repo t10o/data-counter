@@ -21,10 +21,12 @@ export function CounterBoard({ summary, machine, activeHits }: CounterBoardProps
         { label: "ボナ間", current: summary.currentGames, max: summary.maxGames },
       ]
     : [{ label: "現在", current: summary.currentGames, max: summary.maxGames }];
+  const tileCount = summary.kinds.length + 1 + hamari.length;
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]">
+    <div className="flex flex-1 flex-col gap-3">
+      {/* 残りの高さいっぱいにタイルを敷き詰める。5 枚以上なら、横長の画面では 3 列にする */}
+      <div className={cn("grid flex-1 auto-rows-fr grid-cols-2 gap-3", tileCount > 4 && "md:landscape:grid-cols-3")}>
         {summary.kinds.map((kind) => (
           <Tile
             key={kind.id}
@@ -77,14 +79,15 @@ interface TileProps {
 
 function Tile({ label, value, detail, badge, highlight = false }: TileProps) {
   return (
+    // タイルの大きさを数字の大きさの基準にする（cqi / cqb）。大きな画面ほど数字も大きくなる
     <div
       className={cn(
-        "relative rounded-2xl bg-zinc-900 px-5 pt-4 pb-5 ring-1 ring-white/10 transition-shadow",
+        "[container-type:size] relative flex min-h-28 flex-col rounded-2xl bg-zinc-900 px-5 py-4 ring-1 ring-white/10 transition-shadow",
         highlight && "ring-2 ring-zinc-300/60",
       )}
     >
       <div className="flex items-center justify-between gap-2">
-        <p className="flex items-center gap-2 text-sm font-medium text-zinc-400">{label}</p>
+        <p className="flex items-center gap-2 text-sm font-medium text-zinc-400 lg:text-base">{label}</p>
         {badge && (
           <span className="animate-pulse rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-semibold text-zinc-900">
             {badge}
@@ -92,10 +95,10 @@ function Tile({ label, value, detail, badge, highlight = false }: TileProps) {
         )}
       </div>
       {/* ライブで数字が変わっても桁の位置がぶれないよう、ここは等幅の数字にする */}
-      <p className="mt-2 text-4xl font-semibold tracking-tight text-zinc-50 tabular-nums sm:text-5xl xl:text-6xl">
+      <p className="flex flex-1 items-center text-[clamp(2.25rem,min(22cqi,40cqb),9rem)] leading-none font-semibold tracking-tight text-zinc-50 tabular-nums">
         {value}
       </p>
-      <p className="mt-1 text-sm text-zinc-400 tabular-nums">{detail}</p>
+      <p className="text-sm text-zinc-400 tabular-nums lg:text-base">{detail}</p>
     </div>
   );
 }

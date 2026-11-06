@@ -1,8 +1,9 @@
 import type { Hit, MachineConfig, SlumpPoint } from "@data-counter/core";
 import { type KeyboardEvent, type PointerEvent, useMemo, useState } from "react";
-import { useElementWidth } from "../../hooks/use-element-width";
+import { useElementSize } from "../../hooks/use-element-size";
+import { cn } from "../../lib/cn";
 import { formatInteger, formatSigned } from "../../lib/format";
-import { KIND_COLORS, kindShape } from "../../lib/machine";
+import { hasArtGames, KIND_COLORS, kindShape } from "../../lib/machine";
 import { nearestIndex, niceTicks } from "../../lib/scale";
 import { KindMark, MarkerShapePath } from "../ui/kind-mark";
 
@@ -19,12 +20,17 @@ interface SlumpChartProps {
   points: readonly SlumpPoint[];
   hits: readonly Hit[];
   machine: MachineConfig | undefined;
+  /** 高さ（px）。fill のときは使わない */
   height?: number;
+  /** 位置を決めた親（relative）いっぱいに広げる */
+  fill?: boolean;
 }
 
 /** 横軸がゲーム数、縦軸が差枚のスランプグラフ。当たった位置に種別ごとの印を打つ */
-export function SlumpChart({ points, hits, machine, height = 300 }: SlumpChartProps) {
-  const [containerRef, width] = useElementWidth<HTMLDivElement>();
+export function SlumpChart({ points, hits, machine, height: fixedHeight = 300, fill = false }: SlumpChartProps) {
+  const [containerRef, size] = useElementSize<HTMLDivElement>();
+  const { width } = size;
+  const height = fill ? size.height : fixedHeight;
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const layout = useMemo(() => buildLayout(points, hits, width, height), [points, hits, width, height]);
   const { x, y, xMax, xTicks, yTicks } = layout;
@@ -57,8 +63,8 @@ export function SlumpChart({ points, hits, machine, height = 300 }: SlumpChartPr
   };
 
   return (
-    <div ref={containerRef} className="relative">
-      {width > 0 && (
+    <div ref={containerRef} className={cn(fill ? "absolute inset-0" : "relative")}>
+      {width > 0 && height > 0 && (
         // 十字線を左右キーで動かせるので、読み上げではスライダーとして扱う
         <svg
           width={width}
@@ -190,7 +196,7 @@ export function SlumpChart({ points, hits, machine, height = 300 }: SlumpChartPr
           {hoveredHits.map((hit) => (
             <p key={hit.index} className="mt-1 flex items-center gap-1.5 text-zinc-300">
               <KindMark color={hit.color} shape={kindShape(machine, hit.kindId)} />
-              {hit.label}（{formatInteger(hit.games)} G）
+              {hit.label}（{formatInteger(hasArtGames(machine) ? hit.gamesAny : hit.games)} G）
             </p>
           ))}
         </div>

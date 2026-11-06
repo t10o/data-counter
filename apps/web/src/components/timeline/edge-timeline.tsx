@@ -1,6 +1,6 @@
 import type { StoredEdgeEvent } from "@data-counter/core";
 import { type PointerEvent, useMemo, useState } from "react";
-import { useElementWidth } from "../../hooks/use-element-width";
+import { useElementSize } from "../../hooks/use-element-size";
 import { formatOffset } from "../../lib/format";
 import { onIntervals } from "../../lib/pulses";
 import { niceTicks } from "../../lib/scale";
@@ -37,7 +37,7 @@ const NO_MARKERS: readonly TimelineMarker[] = [];
 
 /** ピンごとに ON の区間を並べたタイミングチャート。チャタリング除去前の生イベントをそのまま描く */
 export function EdgeTimeline({ events, lanes, fromUs, toUs, originUs, markers = NO_MARKERS }: EdgeTimelineProps) {
-  const [containerRef, width] = useElementWidth<HTMLDivElement>();
+  const [containerRef, { width }] = useElementSize<HTMLDivElement>();
   const [hoverUs, setHoverUs] = useState<number | null>(null);
 
   const height = TOP + lanes.length * LANE_HEIGHT + AXIS_HEIGHT;

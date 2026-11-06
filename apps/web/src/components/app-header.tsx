@@ -11,7 +11,7 @@ const NAV = [
 
 export function AppHeader() {
   return (
-    <header className="sticky top-0 z-20 border-b border-white/5 bg-zinc-950/80 backdrop-blur">
+    <header className="z-20 shrink-0 border-b border-white/5 bg-zinc-950">
       <div className="mx-auto flex h-14 max-w-7xl items-center gap-4 px-4 sm:px-6">
         <Link to="/" className="flex items-center gap-2 font-semibold tracking-tight text-zinc-50">
           <img src="/favicon.svg" alt="" className="size-6" />

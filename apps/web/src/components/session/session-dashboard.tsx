@@ -1,7 +1,12 @@
 import type { MachineConfig, SessionDetail } from "@data-counter/core";
+import { Link } from "@tanstack/react-router";
+import { ChartLine, Gauge, ListOrdered } from "lucide-react";
 import type { ReactNode } from "react";
 import { useNowUs } from "../../hooks/use-now";
-import { formatDateTime, formatDuration } from "../../lib/format";
+import { cn } from "../../lib/cn";
+import { DASHBOARD_VIEWS, type DashboardView } from "../../lib/dashboard-view";
+import { formatDateTime, formatDuration, formatSigned } from "../../lib/format";
+import { hasArtGames } from "../../lib/machine";
 import { CounterBoard } from "../counter/counter-board";
 import { HitTable } from "../counter/hit-table";
 import { SlumpChart, SlumpLegend } from "../counter/slump-chart";
@@ -10,43 +15,96 @@ import { Card, CardHeader } from "../ui/card";
 interface SessionDashboardProps {
   session: SessionDetail;
   machine: MachineConfig | undefined;
+  /** 出す画面（データ・グラフ・当たり履歴） */
+  view: DashboardView;
   /** 見出しの右側に置く操作 */
   actions?: ReactNode;
 }
 
-/** 実戦 1 回分のデータ。進行中の実戦にも、終わった実戦にも使う */
-export function SessionDashboard({ session, machine, actions }: SessionDashboardProps) {
+/**
+ * 実戦 1 回分のデータ。進行中の実戦にも、終わった実戦にも使う。
+ * 画面を切り替えて、どれも 1 画面に収める（収まらない小さな画面ではページごとスクロールする）
+ */
+export function SessionDashboard({ session, machine, view, actions }: SessionDashboardProps) {
   const { snapshot } = session;
   const activeHits = snapshot.hits.filter((hit) => hit.endedAtUs === null && snapshot.activePins.includes(hit.pin));
 
   return (
-    <div className="flex flex-col gap-4">
-      <header className="flex flex-wrap items-end justify-between gap-3">
+    <div className="flex flex-1 flex-col gap-4">
+      <header className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <h1 className="truncate text-xl font-semibold text-zinc-50 sm:text-2xl">
             {machine?.name ?? session.machineId}
           </h1>
           <SessionPeriod session={session} />
         </div>
-        {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+        <div className="flex flex-wrap items-center gap-2">
+          <ViewTabs view={view} />
+          {actions}
+        </div>
       </header>
 
-      <CounterBoard summary={snapshot} machine={machine} activeHits={activeHits} />
+      {view === "data" && <CounterBoard summary={snapshot} machine={machine} activeHits={activeHits} />}
 
-      <Card>
-        <CardHeader title="スランプグラフ" actions={<SlumpLegend machine={machine} />} />
-        <div className="px-2 pt-2 pb-3 sm:px-3">
-          <SlumpChart points={snapshot.slump} hits={snapshot.hits} machine={machine} />
-        </div>
-      </Card>
+      {view === "graph" && (
+        <Card className="flex min-h-80 flex-1 flex-col">
+          <CardHeader
+            title="スランプグラフ"
+            description={`差枚 ${formatSigned(snapshot.diff)}（最大 ${formatSigned(snapshot.maxDiff)}・最小 ${formatSigned(snapshot.minDiff)}）`}
+            actions={<SlumpLegend machine={machine} />}
+          />
+          <div className="relative mx-2 mt-2 mb-3 min-h-0 flex-1 sm:mx-3">
+            <SlumpChart points={snapshot.slump} hits={snapshot.hits} machine={machine} fill />
+          </div>
+        </Card>
+      )}
 
-      <Card>
-        <CardHeader title="当たり履歴" description="ゲーム数は前の当たりからの回転数" />
-        <div className="pt-2">
-          <HitTable sessionId={session.id} hits={snapshot.hits} machine={machine} />
-        </div>
-      </Card>
+      {view === "hits" && (
+        <Card className="flex min-h-64 flex-1 flex-col">
+          <CardHeader
+            title="当たり履歴"
+            description={
+              hasArtGames(machine)
+                ? "ボナ・ART間は前の当たりから、ボナ間は前のボーナスからの回転数"
+                : "ゲーム数は前の当たりからの回転数"
+            }
+          />
+          {/* 一覧の長さでページが伸びないよう、残りの高さに敷いて、その中でスクロールさせる */}
+          <div className="relative mt-2 min-h-0 flex-1">
+            <HitTable className="absolute inset-0" sessionId={session.id} hits={snapshot.hits} machine={machine} />
+          </div>
+        </Card>
+      )}
     </div>
+  );
+}
+
+const VIEW_ICONS = { data: Gauge, graph: ChartLine, hits: ListOrdered } as const;
+
+/** 画面の切り替え。URL の検索パラメーターに持たせるので、再読み込みしても同じ画面になる */
+function ViewTabs({ view }: { view: DashboardView }) {
+  return (
+    <nav aria-label="画面の切り替え" className="inline-flex rounded-xl bg-white/5 p-1 ring-1 ring-white/10">
+      {(Object.keys(DASHBOARD_VIEWS) as DashboardView[]).map((key) => {
+        const Icon = VIEW_ICONS[key];
+        return (
+          <Link
+            key={key}
+            to="."
+            search={{ view: key }}
+            replace
+            aria-current={key === view ? "page" : undefined}
+            className={cn(
+              "flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-medium text-zinc-400 transition-colors hover:text-zinc-100",
+              key === view && "bg-white/10 text-zinc-50",
+            )}
+          >
+            <Icon className="size-4" aria-hidden="true" />
+            {DASHBOARD_VIEWS[key]}
+          </Link>
+        );
+      })}
+    </nav>
   );
 }
 
