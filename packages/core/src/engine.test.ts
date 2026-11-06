@@ -140,6 +140,7 @@ describe("CounterEngine", () => {
 
     expect(summary.currentGames).toBe(50);
     expect(summary.hitCount).toBe(0);
+    expect(summary.hitCountAny).toBe(1);
     expect(summary.kinds[0]?.count).toBe(1);
   });
 
@@ -168,6 +169,8 @@ describe("CounterEngine", () => {
       ["art", 12, 12],
     ]);
     expect(snapshot).toMatchObject({ currentGames: 19, maxGames: 50, currentGamesAny: 7, maxGamesAny: 30 });
+    expect(snapshot).toMatchObject({ totalGames: 94, hitCount: 1, hitCountAny: 3 });
+    expect(snapshot.hitProbabilityAny).toBeCloseTo(94 / 3);
   });
 
   it("keeps games since a bonus running while a non-resetting signal stays on", () => {

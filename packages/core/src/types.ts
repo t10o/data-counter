@@ -97,6 +97,10 @@ export interface CounterSummary {
   hitCount: number;
   /** 合成確率の分母 */
   hitProbability: number | null;
+  /** resetsGames: false の信号（ART など）も含めた、すべての当たり回数の合計 */
+  hitCountAny: number;
+  /** hitCountAny の確率の分母 */
+  hitProbabilityAny: number | null;
   /** いま ON になっている信号のピン番号 */
   activePins: number[];
   firstEventAtUs: number | null;

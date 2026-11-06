@@ -12,7 +12,7 @@ import type {
 } from "./types.ts";
 
 /** 集計の仕方を変えたら上げる。保存してある集計結果のキャッシュを捨てるのに使う */
-export const ENGINE_VERSION = 3;
+export const ENGINE_VERSION = 4;
 
 const DEFAULT_MAX_SLUMP_POINTS = 1200;
 
@@ -132,6 +132,8 @@ export class CounterEngine {
       kinds,
       hitCount,
       hitProbability: ratio(this.#totalGames, hitCount),
+      hitCountAny: this.#hits.length,
+      hitProbabilityAny: ratio(this.#totalGames, this.#hits.length),
       activePins: [...this.#activeHits.keys()],
       firstEventAtUs: this.#firstEventAtUs,
       lastEventAtUs: this.#lastEventAtUs,
