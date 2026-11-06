@@ -15,11 +15,18 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { name: "theme-color", content: "#09090b" },
+      // ホーム画面に追加したとき、ブラウザの枠なしの全画面で開く（iOS の古い版向け。新しい版は manifest の display を見る）
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black" },
+      { name: "apple-mobile-web-app-title", content: "データカウンター" },
       { title: "データカウンター" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
+      // ホーム画面のアイコンからは、追加したときのページではなく必ずトップ（今の実戦）を開く（start_url）
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
     ],
   }),
   shellComponent: RootDocument,
