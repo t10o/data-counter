@@ -1,6 +1,6 @@
 import type { MachineConfig, SessionDetail } from "@data-counter/core";
 import { Link } from "@tanstack/react-router";
-import { ChartLine, Gauge, ListOrdered } from "lucide-react";
+import { ChartLine, Gauge, ListOrdered, Tally5 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useNowUs } from "../../hooks/use-now";
 import { cn } from "../../lib/cn";
@@ -9,13 +9,14 @@ import { formatDateTime, formatDuration, formatSigned } from "../../lib/format";
 import { hasArtGames } from "../../lib/machine";
 import { CounterBoard } from "../counter/counter-board";
 import { HitTable } from "../counter/hit-table";
+import { ManualCounterBoard } from "../counter/manual-counter-board";
 import { SlumpChart, SlumpLegend } from "../counter/slump-chart";
 import { Card, CardHeader } from "../ui/card";
 
 interface SessionDashboardProps {
   session: SessionDetail;
   machine: MachineConfig | undefined;
-  /** 出す画面（データ・グラフ・当たり履歴） */
+  /** 出す画面（データ・グラフ・当たり履歴・手動集計） */
   view: DashboardView;
   /** 見出しの右側に置く操作 */
   actions?: ReactNode;
@@ -28,6 +29,11 @@ interface SessionDashboardProps {
 export function SessionDashboard({ session, machine, view, actions }: SessionDashboardProps) {
   const { snapshot } = session;
   const activeHits = snapshot.hits.filter((hit) => hit.endedAtUs === null && snapshot.activePins.includes(hit.pin));
+  const counters = machine?.counters ?? [];
+  // 手動集計は、手で数えるものが設定してある機種だけ
+  const views = (Object.keys(DASHBOARD_VIEWS) as DashboardView[]).filter(
+    (key) => key !== "count" || counters.length > 0,
+  );
 
   return (
     <div className="flex flex-1 flex-col gap-4">
@@ -39,7 +45,7 @@ export function SessionDashboard({ session, machine, view, actions }: SessionDas
           <SessionPeriod session={session} />
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <ViewTabs view={view} />
+          <ViewTabs views={views} view={view} />
           {actions}
         </div>
       </header>
@@ -75,17 +81,26 @@ export function SessionDashboard({ session, machine, view, actions }: SessionDas
           </div>
         </Card>
       )}
+
+      {view === "count" &&
+        (counters.length > 0 ? (
+          <ManualCounterBoard session={session} counters={counters} />
+        ) : (
+          <Card className="px-5 py-12 text-center text-sm text-zinc-400">
+            この機種には、手で数えるものが設定されていません（機種設定の counters）。
+          </Card>
+        ))}
     </div>
   );
 }
 
-const VIEW_ICONS = { data: Gauge, graph: ChartLine, hits: ListOrdered } as const;
+const VIEW_ICONS = { data: Gauge, graph: ChartLine, hits: ListOrdered, count: Tally5 } as const;
 
 /** 画面の切り替え。URL の検索パラメーターに持たせるので、再読み込みしても同じ画面になる */
-function ViewTabs({ view }: { view: DashboardView }) {
+function ViewTabs({ views, view }: { views: readonly DashboardView[]; view: DashboardView }) {
   return (
     <nav aria-label="画面の切り替え" className="inline-flex rounded-xl bg-white/5 p-1 ring-1 ring-white/10">
-      {(Object.keys(DASHBOARD_VIEWS) as DashboardView[]).map((key) => {
+      {views.map((key) => {
         const Icon = VIEW_ICONS[key];
         return (
           <Link
@@ -95,11 +110,12 @@ function ViewTabs({ view }: { view: DashboardView }) {
             replace
             aria-current={key === view ? "page" : undefined}
             className={cn(
-              "flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-medium text-zinc-400 transition-colors hover:text-zinc-100",
+              "flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-medium whitespace-nowrap text-zinc-400 transition-colors hover:text-zinc-100",
               key === view && "bg-white/10 text-zinc-50",
             )}
           >
-            <Icon className="size-4" aria-hidden="true" />
+            {/* スマホの幅では 4 つが 1 行に収まらないので、アイコンを省いて文字だけにする */}
+            <Icon className="hidden size-4 sm:block" aria-hidden="true" />
             {DASHBOARD_VIEWS[key]}
           </Link>
         );

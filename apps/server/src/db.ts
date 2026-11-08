@@ -48,6 +48,17 @@ const MIGRATIONS: readonly string[] = [
     snapshot TEXT NOT NULL
   ) STRICT;
   `,
+  `
+  -- 画面のボタンで手で数えたもの（リーチ目など、端子からは取れないもの）。1 行が 1 回分。
+  -- 実戦の機種を付け替えても消さない（counter_id がその機種の設定になければ出さないだけ）
+  CREATE TABLE manual_counts (
+    id INTEGER PRIMARY KEY,
+    session_id INTEGER NOT NULL REFERENCES sessions (id) ON DELETE CASCADE,
+    counter_id TEXT NOT NULL,
+    at_us INTEGER NOT NULL
+  ) STRICT;
+  CREATE INDEX manual_counts_session ON manual_counts (session_id, counter_id, at_us);
+  `,
 ];
 
 export function openDatabase(path: string): DatabaseSync {

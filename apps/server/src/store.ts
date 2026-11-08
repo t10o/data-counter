@@ -5,6 +5,7 @@ import type {
   DeviceStatus,
   Edge,
   EdgeEvent,
+  ManualCounts,
   Session,
   StoredEdgeEvent,
 } from "@data-counter/core";
@@ -158,6 +159,20 @@ export class Store {
     this.#sql.cacheSnapshot.run(sessionId, cacheKey, JSON.stringify(snapshot));
   }
 
+  manualCounts(sessionId: number): ManualCounts {
+    const rows = this.#sql.manualCounts.all(sessionId) as { counter_id: string; count: number }[];
+    return Object.fromEntries(rows.map((row) => [row.counter_id, row.count]));
+  }
+
+  addManualCount(sessionId: number, counterId: string, atUs: number): void {
+    this.#sql.insertManualCount.run(sessionId, counterId, atUs);
+  }
+
+  /** いちばん最後に数えた 1 回を消す（押し間違いの取り消し）。まだ数えていなければ何もしない */
+  removeLatestManualCount(sessionId: number, counterId: string): void {
+    this.#sql.deleteLatestManualCount.run({ sessionId, counterId });
+  }
+
   /** あとから届いたイベントが含まれる実戦の集計キャッシュを捨てる */
   invalidateSnapshots({ fromUs, toUs }: { fromUs: number; toUs: number }): void {
     this.#sql.deleteSnapshotsBetween.run({ fromUs, toUs });
@@ -255,6 +270,16 @@ function prepareStatements(db: DatabaseSync) {
       ON CONFLICT (session_id) DO UPDATE SET cache_key = excluded.cache_key, snapshot = excluded.snapshot
     `),
     deleteSnapshot: db.prepare("DELETE FROM session_snapshots WHERE session_id = ?"),
+    manualCounts: db.prepare(`
+      SELECT counter_id, COUNT(*) AS count FROM manual_counts WHERE session_id = ? GROUP BY counter_id
+    `),
+    insertManualCount: db.prepare("INSERT INTO manual_counts (session_id, counter_id, at_us) VALUES (?, ?, ?)"),
+    deleteLatestManualCount: db.prepare(`
+      DELETE FROM manual_counts WHERE id = (
+        SELECT id FROM manual_counts WHERE session_id = :sessionId AND counter_id = :counterId
+        ORDER BY at_us DESC, id DESC LIMIT 1
+      )
+    `),
     deleteSnapshotsBetween: db.prepare(`
       DELETE FROM session_snapshots WHERE session_id IN (
         SELECT id FROM sessions

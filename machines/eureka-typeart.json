@@ -21,5 +21,12 @@
       "resetsGames": false,
       "kinds": [{ "id": "art", "label": "CM・HI-EVO", "color": "aqua" }]
     }
+  ],
+  "counters": [
+    { "id": "reach-white", "label": "リーチ目白" },
+    { "id": "reach-black", "label": "リーチ目黒" },
+    { "id": "riri-cherry", "label": "リリチェ" },
+    { "id": "center-cherry-art", "label": "中チェ+ART" },
+    { "id": "nanairo-unkai", "label": "七色雲海" }
   ]
 }

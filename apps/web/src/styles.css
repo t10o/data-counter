@@ -12,6 +12,17 @@
   --color-chart-grid: #27272a;
   --color-chart-baseline: #52525b;
   --color-chart-line: #e4e4e7;
+
+  /* 手動集計で数が変わったとき、数字を一瞬はねさせる */
+  --animate-count-pop: count-pop 200ms ease-out;
+  @keyframes count-pop {
+    from {
+      transform: scale(1.15);
+    }
+    to {
+      transform: scale(1);
+    }
+  }
 }
 
 @layer base {

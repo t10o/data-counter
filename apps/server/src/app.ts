@@ -32,6 +32,7 @@ const KEEPALIVE_MS = 20_000;
 const SPA_SHELL = "_shell.html";
 
 const idSchema = z.coerce.number().int().positive();
+const counterIdSchema = z.string().regex(/^[a-z0-9-]+$/);
 const sessionsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(500).default(100),
 });
@@ -70,6 +71,16 @@ export function createApp(deps: AppDependencies): Hono {
     const id = parse(idSchema, c.req.param("id"));
     const { machineId } = await parseBody(c, updateSessionRequestSchema);
     return c.json(sessions.setMachine(id, machineId));
+  });
+
+  // 手で数えるもの（リーチ目など）。POST で 1 回足し、DELETE で最後の 1 回を取り消す
+  api.post("/sessions/:id/counts/:counterId", (c) => {
+    const id = parse(idSchema, c.req.param("id"));
+    return c.json(sessions.addManualCount(id, parse(counterIdSchema, c.req.param("counterId"))));
+  });
+  api.delete("/sessions/:id/counts/:counterId", (c) => {
+    const id = parse(idSchema, c.req.param("id"));
+    return c.json(sessions.removeManualCount(id, parse(counterIdSchema, c.req.param("counterId"))));
   });
 
   api.get("/events", (c) => {

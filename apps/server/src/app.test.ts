@@ -1,5 +1,12 @@
 import { join } from "node:path";
-import type { DeviceStatus, IngestRequest, SessionDetail, SessionListItem, StoredEdgeEvent } from "@data-counter/core";
+import type {
+  DeviceStatus,
+  IngestRequest,
+  ManualCounts,
+  SessionDetail,
+  SessionListItem,
+  StoredEdgeEvent,
+} from "@data-counter/core";
 import { describe, expect, it } from "vitest";
 import { createApp } from "./app.ts";
 import { openDatabase } from "./db.ts";
@@ -193,6 +200,69 @@ describe("sessions", () => {
     const response = await request<{ error: string }>("/api/sessions", post({ machineId: "nope" }));
 
     expect(response.status).toBe(400);
+  });
+});
+
+/** 手で数えるものが設定してある機種（エウレカ）で実戦を始める */
+async function startCountable() {
+  const context = setup();
+  const { body } = await context.request<SessionDetail>("/api/sessions", post({ machineId: "eureka-typeart" }));
+  const count = (counterId: string, method: "POST" | "DELETE" = "POST", id = body.id) => {
+    context.clock.nowUs += 1_000_000;
+    return context.request<ManualCounts>(`/api/sessions/${id}/counts/${counterId}`, { method });
+  };
+  return { ...context, session: body, count };
+}
+
+describe("manual counts", () => {
+  it("counts per session and undoes the latest one", async () => {
+    const { request, session, count } = await startCountable();
+
+    await count("reach-white");
+    await count("reach-white");
+    await count("riri-cherry");
+    const undone = await count("reach-white", "DELETE");
+    const { body } = await request<SessionDetail>("/api/sessions/current");
+
+    expect(session.manualCounts).toEqual({});
+    expect(undone).toEqual({ status: 200, body: { "reach-white": 1, "riri-cherry": 1 } });
+    expect(body.manualCounts).toEqual({ "reach-white": 1, "riri-cherry": 1 });
+  });
+
+  it("does nothing when undoing a counter that has not been counted", async () => {
+    const { count } = await startCountable();
+
+    expect(await count("reach-black", "DELETE")).toEqual({ status: 200, body: {} });
+  });
+
+  it("keeps the counts with the session they were made in", async () => {
+    const { request, session, count } = await startCountable();
+    await count("reach-black");
+
+    await request("/api/sessions", post({ machineId: "eureka-typeart" }));
+    const previous = await request<SessionDetail>(`/api/sessions/${session.id}`);
+    const current = await request<SessionDetail>("/api/sessions/current");
+
+    expect(previous.body.manualCounts).toEqual({ "reach-black": 1 });
+    expect(current.body.manualCounts).toEqual({});
+  });
+
+  it("only counts in the current session", async () => {
+    const { request, session, count } = await startCountable();
+    await request("/api/sessions", post({ machineId: "eureka-typeart" }));
+
+    expect((await count("reach-white", "POST", session.id)).status).toBe(409);
+    expect((await count("reach-white", "DELETE", session.id)).status).toBe(409);
+    expect((await count("reach-white", "POST", 999)).status).toBe(404);
+  });
+
+  it("rejects counters the machine does not have", async () => {
+    const { request, count } = await startCountable();
+    expect((await count("nope")).status).toBe(400);
+
+    // ディスクアップ2 には手で数えるものの設定がない
+    const { body } = await request<SessionDetail>("/api/sessions", post({ machineId: "discup2" }));
+    expect((await count("reach-white", "POST", body.id)).status).toBe(400);
   });
 });
 

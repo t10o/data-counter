@@ -56,3 +56,22 @@ export function useChangeSessionMachine(id: number) {
     onSuccess: write,
   });
 }
+
+/**
+ * 手で数えるもの（リーチ目など）を 1 回足す（step: -1 なら最後の 1 回を取り消す）。
+ * 続けて押しても順番が入れ替わらないよう、同じ実戦への書き込みは 1 つずつ送る
+ */
+export function useManualCount(sessionId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    scope: { id: `manual-count:${sessionId}` },
+    mutationFn: ({ counterId, step }: { counterId: string; step: 1 | -1 }) =>
+      step > 0 ? api.addManualCount(sessionId, counterId) : api.removeManualCount(sessionId, counterId),
+    onSuccess: (manualCounts) => {
+      const update = (session: SessionDetail | null | undefined) =>
+        session?.id === sessionId ? { ...session, manualCounts } : session;
+      queryClient.setQueryData(queryKeys.currentSession, update);
+      queryClient.setQueryData(queryKeys.session(sessionId), update);
+    },
+  });
+}

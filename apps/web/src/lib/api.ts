@@ -1,6 +1,7 @@
 import type {
   DeviceStatus,
   MachineConfig,
+  ManualCounts,
   SessionDetail,
   SessionListItem,
   StartSessionRequest,
@@ -19,7 +20,7 @@ export class ApiError extends Error {
 }
 
 interface RequestOptions {
-  method?: "GET" | "POST" | "PATCH";
+  method?: "GET" | "POST" | "PATCH" | "DELETE";
   json?: unknown;
 }
 
@@ -45,6 +46,10 @@ export const api = {
   startSession: (body: StartSessionRequest) => request<SessionDetail>("/sessions", { method: "POST", json: body }),
   updateSession: (id: number, body: UpdateSessionRequest) =>
     request<SessionDetail>(`/sessions/${id}`, { method: "PATCH", json: body }),
+  addManualCount: (id: number, counterId: string) =>
+    request<ManualCounts>(`/sessions/${id}/counts/${encodeURIComponent(counterId)}`, { method: "POST" }),
+  removeManualCount: (id: number, counterId: string) =>
+    request<ManualCounts>(`/sessions/${id}/counts/${encodeURIComponent(counterId)}`, { method: "DELETE" }),
   events: (fromUs: number, toUs: number) =>
     request<StoredEdgeEvent[]>(`/events?${new URLSearchParams({ from: String(fromUs), to: String(toUs) })}`),
   devices: () => request<DeviceStatus[]>("/devices"),

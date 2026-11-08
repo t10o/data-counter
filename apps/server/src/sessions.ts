@@ -2,6 +2,7 @@ import {
   CounterEngine,
   type CounterSnapshot,
   type CounterSummary,
+  type ManualCounts,
   type Session,
   type SessionDetail,
   type SessionListItem,
@@ -54,13 +55,13 @@ export class SessionService {
 
   current(): SessionDetail | null {
     const live = this.#live;
-    return live && { ...live.session, snapshot: live.engine.snapshot() };
+    return live && this.#detail(live.session, live.engine.snapshot());
   }
 
   get(id: number): SessionDetail | null {
     if (this.#live?.session.id === id) return this.current();
     const session = this.#store.session(id);
-    return session ? { ...session, snapshot: this.#closedSnapshot(session) } : null;
+    return session ? this.#detail(session, this.#closedSnapshot(session)) : null;
   }
 
   list(limit: number): SessionListItem[] {
@@ -120,6 +121,38 @@ export class SessionService {
     }
     if (deviceNowUs >= session.startedAtUs) engine.advanceTo(deviceNowUs);
     this.#notify();
+  }
+
+  /** 手で数えるもの（リーチ目など）を 1 回足す。数えられるのは進行中の実戦だけ */
+  addManualCount(id: number, counterId: string): ManualCounts {
+    this.#assertCountable(id, counterId);
+    this.#store.addManualCount(id, counterId, this.#nowUs());
+    this.#notify();
+    return this.#store.manualCounts(id);
+  }
+
+  /** 手で数えたものの、最後の 1 回を取り消す（押し間違い用） */
+  removeManualCount(id: number, counterId: string): ManualCounts {
+    this.#assertCountable(id, counterId);
+    this.#store.removeLatestManualCount(id, counterId);
+    this.#notify();
+    return this.#store.manualCounts(id);
+  }
+
+  #detail(session: Session, snapshot: CounterSnapshot): SessionDetail {
+    return { ...session, snapshot, manualCounts: this.#store.manualCounts(session.id) };
+  }
+
+  #assertCountable(id: number, counterId: string): void {
+    const live = this.#live;
+    if (live?.session.id !== id) {
+      if (this.#store.session(id) === undefined) throw new HTTPException(404, { message: "実戦が見つかりません" });
+      throw new HTTPException(409, { message: "終わった実戦には数えられません" });
+    }
+    const machine = this.#machines.get(live.session.machineId);
+    if (!machine.counters.some((counter) => counter.id === counterId)) {
+      throw new HTTPException(400, { message: `${machine.name} には ${counterId} を数える設定がありません` });
+    }
   }
 
   #replay(session: Session): LiveSession {

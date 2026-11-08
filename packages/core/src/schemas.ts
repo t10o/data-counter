@@ -45,6 +45,14 @@ const signalSchema = z
     });
   });
 
+const counterSchema = z.object({
+  id: z
+    .string()
+    .regex(/^[a-z0-9-]+$/, "id は英小文字・数字・ハイフンのみ")
+    .describe("記録に残る名前。あとから全実戦で合わせて数えられるよう、一度決めたら変えない"),
+  label: z.string().min(1),
+});
+
 export const machineSchema = z
   .object({
     id: z.string().regex(/^[a-z0-9-]+$/, "id は英小文字・数字・ハイフンのみ"),
@@ -73,6 +81,10 @@ export const machineSchema = z
       })
       .prefault({}),
     signals: z.array(signalSchema),
+    counters: z
+      .array(counterSchema)
+      .default([])
+      .describe("端子からは取れないので、画面のボタンで手で数えるもの（リーチ目など）。実戦ごとに記録する"),
   })
   .superRefine((machine, ctx) => {
     const pins = [machine.pins.in, machine.pins.out, ...machine.signals.map((signal) => signal.pin)];
@@ -82,6 +94,10 @@ export const machineSchema = z
     const kindIds = machine.signals.flatMap((signal) => signal.kinds.map((kind) => kind.id));
     if (new Set(kindIds).size !== kindIds.length) {
       ctx.addIssue({ code: "custom", path: ["signals"], message: "種別の id が重複しています" });
+    }
+    const counterIds = machine.counters.map((counter) => counter.id);
+    if (new Set(counterIds).size !== counterIds.length) {
+      ctx.addIssue({ code: "custom", path: ["counters"], message: "手で数えるものの id が重複しています" });
     }
   });
 

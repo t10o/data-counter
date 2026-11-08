@@ -25,10 +25,11 @@ export function AppHeader() {
               key={to}
               to={to}
               activeOptions={{ exact }}
-              className="flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-medium text-zinc-400 transition-colors hover:text-zinc-100"
+              className="flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-medium whitespace-nowrap text-zinc-400 transition-colors hover:text-zinc-100"
               activeProps={{ className: "bg-white/10 text-zinc-50" }}
             >
-              <Icon className="size-4" aria-hidden="true" />
+              {/* スマホの幅では収まらないので、アイコンを省いて文字だけにする */}
+              <Icon className="hidden size-4 sm:block" aria-hidden="true" />
               {label}
             </Link>
           ))}

@@ -6,6 +6,8 @@ export const DASHBOARD_VIEWS = {
   data: "データ",
   graph: "グラフ",
   hits: "当たり履歴",
+  // 手で数えるもの（リーチ目など）。機種設定に counters がある機種だけ出す
+  count: "手動集計",
 } as const;
 
 export type DashboardView = keyof typeof DASHBOARD_VIEWS;
@@ -15,7 +17,7 @@ export type DashboardView = keyof typeof DASHBOARD_VIEWS;
  * リンクでは省略できるよう default を、変な値が来ても落ちないよう catch を付ける
  */
 export const dashboardSearchSchema = z.object({
-  view: z.enum(["data", "graph", "hits"]).default("data").catch("data"),
+  view: z.enum(["data", "graph", "hits", "count"]).default("data").catch("data"),
 });
 
 /** 既定の画面（データ）のときは、URL に ?view=data を付けない */

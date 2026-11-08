@@ -115,6 +115,29 @@
           "kinds"
         ]
       }
+    },
+    "counters": {
+      "default": [],
+      "description": "端子からは取れないので、画面のボタンで手で数えるもの（リーチ目など）。実戦ごとに記録する",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]+$",
+            "description": "記録に残る名前。あとから全実戦で合わせて数えられるよう、一度決めたら変えない"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "id",
+          "label"
+        ]
+      }
     }
   },
   "required": [

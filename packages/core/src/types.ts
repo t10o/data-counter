@@ -10,6 +10,8 @@ import type {
 export type MachineConfig = z.output<typeof machineSchema>;
 export type MachineSignal = MachineConfig["signals"][number];
 export type MachineKind = MachineSignal["kinds"][number];
+/** 画面のボタンで手で数えるもの（リーチ目など） */
+export type MachineCounter = MachineConfig["counters"][number];
 export type KindColor = (typeof kindColors)[number];
 
 /** ピンのレベル。プルアップしているので、接点が閉じると 0（Low）になる */
@@ -133,8 +135,12 @@ export interface Session {
   endedAtUs: number | null;
 }
 
+/** 手で数えた回数（キーは機種設定の counters の id）。数えていないものはキーがない */
+export type ManualCounts = Record<string, number>;
+
 export interface SessionDetail extends Session {
   snapshot: CounterSnapshot;
+  manualCounts: ManualCounts;
 }
 
 export interface SessionListItem extends Session {
