@@ -87,10 +87,26 @@ describe("CounterEngine", () => {
     expect(snapshot.currentGames).toBe(5);
     expect(snapshot.maxGames).toBe(120);
     expect(snapshot.hitCount).toBe(2);
-    expect(snapshot.hitProbability).toBe(105);
-    expect(snapshot.kinds).toEqual([
-      { id: "big", label: "BIG", color: "red", count: 1, probability: 210 },
-      { id: "reg", label: "REG", color: "blue", count: 1, probability: 210 },
+  });
+
+  it("leaves the games during a bonus out of the probabilities", () => {
+    const timeline = new Timeline()
+      .games(120)
+      .fall(BIG)
+      .games(30, 8)
+      .rise(BIG)
+      .games(45)
+      .fall(REG)
+      .games(10, 10)
+      .rise(REG)
+      .games(5);
+    const summary = new CounterEngine(testMachine()).pushAll(timeline.events).finish().summary();
+
+    // 総回転 210G のうち、BIG 中の 30G と REG 中の 10G を除いた 170G で割る
+    expect(summary).toMatchObject({ totalGames: 210, nonBonusGames: 170, hitProbability: 85 });
+    expect(summary.kinds).toEqual([
+      { id: "big", label: "BIG", color: "red", count: 1, probability: 170 },
+      { id: "reg", label: "REG", color: "blue", count: 1, probability: 170 },
     ]);
   });
 
@@ -169,8 +185,8 @@ describe("CounterEngine", () => {
       ["art", 12, 12],
     ]);
     expect(snapshot).toMatchObject({ currentGames: 19, maxGames: 50, currentGamesAny: 7, maxGamesAny: 30 });
-    expect(snapshot).toMatchObject({ totalGames: 94, hitCount: 1, hitCountAny: 3 });
-    expect(snapshot.hitProbabilityAny).toBeCloseTo(94 / 3);
+    expect(snapshot).toMatchObject({ totalGames: 94, nonBonusGames: 69, hitCount: 1, hitCountAny: 3 });
+    expect(snapshot.hitProbabilityAny).toBe(23);
   });
 
   it("keeps games since a bonus running while a non-resetting signal stays on", () => {
@@ -180,7 +196,7 @@ describe("CounterEngine", () => {
     const timeline = new Timeline().games(10).fall(REG).games(40).rise(REG).games(5);
     const summary = new CounterEngine(machine).pushAll(timeline.events).finish().summary();
 
-    expect(summary).toMatchObject({ currentGames: 55, currentGamesAny: 5, maxGamesAny: 10 });
+    expect(summary).toMatchObject({ currentGames: 55, currentGamesAny: 5, maxGamesAny: 10, nonBonusGames: 55 });
   });
 
   it("gives the same games since any hit when every signal resets the games", () => {

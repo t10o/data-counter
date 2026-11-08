@@ -12,7 +12,7 @@ import type {
 } from "./types.ts";
 
 /** 集計の仕方を変えたら上げる。保存してある集計結果のキャッシュを捨てるのに使う */
-export const ENGINE_VERSION = 4;
+export const ENGINE_VERSION = 5;
 
 const DEFAULT_MAX_SLUMP_POINTS = 1200;
 
@@ -29,6 +29,7 @@ export interface SnapshotOptions {
  *   ボーナス中などでベット枚数が変わっても数えられる
  * - ハマりは 2 通り数える。currentGames はゲーム数を戻す信号（resetsGames。ボーナスなど）の当たりから（ボナ間）、
  *   currentGamesAny はどの信号の当たりからでも（ボナ・ART 間）。どちらも当たりの信号が ON の間は進めない
+ * - 確率の分母は、ボーナス中（resetsGames の信号が ON の間）を除いたゲーム数。マイスロやホールのデータカウンターと同じ
  * - チャタリングを除くため、変化は machine.debounceMs だけ続いてから確定する。
  *   ライブで使うときは {@link advanceTo} で時間が進んだことを知らせると、次のイベントを待たずに確定する
  * - 過去のデータをまとめて集計するときは、最後に {@link finish} を呼ぶ
@@ -43,6 +44,8 @@ export class CounterEngine {
   #in = 0;
   #out = 0;
   #totalGames = 0;
+  /** ボーナス中（resetsGames の信号が ON の間）を除いたゲーム数。確率の分母 */
+  #nonBonusGames = 0;
   #currentGames = 0;
   #currentGamesAny = 0;
   #maxDiff = 0;
@@ -111,7 +114,7 @@ export class CounterEngine {
         label: kind.label,
         color: kind.color,
         count,
-        probability: ratio(this.#totalGames, count),
+        probability: ratio(this.#nonBonusGames, count),
       };
     });
     const hitCount = this.#hits.filter((hit) => this.#signals.get(hit.pin)?.resetsGames).length;
@@ -119,6 +122,7 @@ export class CounterEngine {
     return {
       machineId: this.machine.id,
       totalGames: this.#totalGames,
+      nonBonusGames: this.#nonBonusGames,
       currentGames: this.#currentGames,
       currentGamesAny: this.#currentGamesAny,
       in: this.#in,
@@ -131,9 +135,9 @@ export class CounterEngine {
       maxGamesAny: this.#maxGamesAny,
       kinds,
       hitCount,
-      hitProbability: ratio(this.#totalGames, hitCount),
+      hitProbability: ratio(this.#nonBonusGames, hitCount),
       hitCountAny: this.#hits.length,
-      hitProbabilityAny: ratio(this.#totalGames, this.#hits.length),
+      hitProbabilityAny: ratio(this.#nonBonusGames, this.#hits.length),
       activePins: [...this.#activeHits.keys()],
       firstEventAtUs: this.#firstEventAtUs,
       lastEventAtUs: this.#lastEventAtUs,
@@ -212,6 +216,7 @@ export class CounterEngine {
     this.#totalGames++;
     for (const hit of this.#activeHits.values()) hit.gamesDuring++;
     if (!this.#inBonus) {
+      this.#nonBonusGames++;
       this.#currentGames++;
       this.#maxGames = Math.max(this.#maxGames, this.#currentGames);
     }

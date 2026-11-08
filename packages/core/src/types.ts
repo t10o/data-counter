@@ -63,7 +63,7 @@ export interface KindStat {
   label: string;
   color: KindColor;
   count: number;
-  /** 確率の分母（1/x の x）。まだ当たっていなければ null */
+  /** 確率の分母（1/x の x）。ボーナス中を除いたゲーム数（nonBonusGames）から出す。まだ当たっていなければ null */
   probability: number | null;
 }
 
@@ -73,6 +73,11 @@ export type SlumpPoint = readonly [games: number, diff: number];
 export interface CounterSummary {
   machineId: string;
   totalGames: number;
+  /**
+   * ボーナス中（resetsGames の信号が ON の間）を除いたゲーム数。確率（手動集計も含む）の分母にする。
+   * マイスロやホールのデータカウンターも、ボーナス中のゲーム数を確率の分母に入れない
+   */
+  nonBonusGames: number;
   /** ゲーム数を戻す信号（resetsGames。ボーナスなど）の最後の当たりからのゲーム数（ボナ間ハマり） */
   currentGames: number;
   /**

@@ -1,7 +1,13 @@
 import type { CounterSummary, Hit, MachineConfig } from "@data-counter/core";
 import type { ReactNode } from "react";
 import { cn } from "../../lib/cn";
-import { formatInteger, formatPercent, formatProbability, formatSigned } from "../../lib/format";
+import {
+  formatApproxProbability,
+  formatInteger,
+  formatPercent,
+  formatProbability,
+  formatSigned,
+} from "../../lib/format";
 import { hasArtGames, kindShape } from "../../lib/machine";
 import { KindMark } from "../ui/kind-mark";
 
@@ -30,17 +36,19 @@ export function CounterBoard({ summary, machine, activeHits }: CounterBoardProps
   );
   const bonusKindCount = summary.kinds.filter((kind) => bonusKindIds.has(kind.id)).length;
   const lastBonusIndex = summary.kinds.findLastIndex((kind) => bonusKindIds.has(kind.id));
+  // ボーナスの確率には「約」を付ける。端子からは成立の瞬間が分からず、成立から揃うまで（内部中）のゲームも
+  // 分母に入るので、マイスロ（内部中を除く）より少し重く出る。ボーナスを足し合わせる合算も同じ
   const bonusTotal: TileItem = {
     key: "bonus-total",
     label: artGames ? "ボナ合算" : "合算",
     value: formatInteger(summary.hitCount),
-    detail: formatProbability(summary.hitProbability),
+    detail: formatApproxProbability(summary.hitProbability),
   };
   const anyTotal: TileItem = {
     key: "any-total",
     label: "ボナ+ART合算",
     value: formatInteger(summary.hitCountAny),
-    detail: formatProbability(summary.hitProbabilityAny),
+    detail: formatApproxProbability(summary.hitProbabilityAny),
   };
   const kindTiles = summary.kinds.flatMap((kind, index): TileItem[] => [
     {
@@ -52,7 +60,9 @@ export function CounterBoard({ summary, machine, activeHits }: CounterBoardProps
         </>
       ),
       value: formatInteger(kind.count),
-      detail: formatProbability(kind.probability),
+      detail: bonusKindIds.has(kind.id)
+        ? formatApproxProbability(kind.probability)
+        : formatProbability(kind.probability),
     },
     ...(index === lastBonusIndex && bonusKindCount >= 2 ? [bonusTotal] : []),
     ...(index === summary.kinds.length - 1 && artGames && bonusKindCount >= 1 ? [anyTotal] : []),
@@ -60,7 +70,13 @@ export function CounterBoard({ summary, machine, activeHits }: CounterBoardProps
 
   const tiles: TileItem[] = [
     ...kindTiles,
-    { key: "total", label: "総回転", value: formatInteger(summary.totalGames) },
+    {
+      key: "total",
+      label: "総回転",
+      value: formatInteger(summary.totalGames),
+      // 確率の分母。ボーナス中のゲーム数は入れない（マイスロと同じ）
+      detail: `ボナ除く ${formatInteger(summary.nonBonusGames)}`,
+    },
     ...hamari.map(({ label, current, max }, index) => ({
       key: label,
       label,

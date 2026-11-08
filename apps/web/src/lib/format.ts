@@ -18,6 +18,10 @@ export const formatSigned = (value: number): string =>
 export const formatProbability = (denominator: number | null): string =>
   denominator === null ? "—" : `1/${denominator.toFixed(1)}`;
 
+/** 目安でしかない確率を「約1/123.4」の形にする */
+export const formatApproxProbability = (denominator: number | null): string =>
+  denominator === null ? "—" : `約${formatProbability(denominator)}`;
+
 export const formatPercent = (ratio: number | null): string => (ratio === null ? "—" : `${(ratio * 100).toFixed(1)}%`);
 
 export const formatTime = (atUs: number): string => timeOfDay.format(atUs / 1000);
